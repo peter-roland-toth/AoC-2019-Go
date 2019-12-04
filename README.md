@@ -1,2 +1,2 @@
 # AoC-2019-Go
-Solutions for Advent of Code 2019, written in Go
+[Advent of Code 2019](https://adventofcode.com/2019) solutions, written in Go
