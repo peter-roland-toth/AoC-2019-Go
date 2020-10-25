@@ -2,25 +2,25 @@ package main
 
 import (
 	"fmt"
-    "os"
-    "bufio"
-    "strconv"
+	"os"
+	"bufio"
+	"strconv"
 )
 
 func main() {
 	file, _ := os.Open("input")
-    defer file.Close()
+	defer file.Close()
 
-    scanner := bufio.NewScanner(file)
-    p1, p2 := 0, 0
-    for scanner.Scan() {
-    	i, _ := strconv.Atoi(scanner.Text())
-        p1 += fuel(i)
-        p2 += allFuel(i)
-    }
+	scanner := bufio.NewScanner(file)
+	p1, p2 := 0, 0
+	for scanner.Scan() {
+		i, _ := strconv.Atoi(scanner.Text())
+		p1 += fuel(i)
+		p2 += allFuel(i)
+	}
 
-    fmt.Printf("Part 1: %d\n", p1)
-    fmt.Printf("Part 2: %d\n", p2)
+	fmt.Printf("Part 1: %d\n", p1)
+	fmt.Printf("Part 2: %d\n", p2)
 }
 
 func fuel(f int) int {

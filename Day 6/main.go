@@ -41,20 +41,20 @@ func find(current string, key string, m map[string][]string, path []string) []st
 
 func main() {
 	file, _ := os.Open("input")
-    defer file.Close()	
+	defer file.Close()	
 
 	scanner := bufio.NewScanner(file)
-   	m := make(map[string][]string)
+	m := make(map[string][]string)
 
-    for scanner.Scan() {
-    	i := strings.Split(scanner.Text(), ")")
-    	_, ok := m[i[0]]
-    	if ok {
-    		m[i[0]] = append(m[i[0]], i[1])
-    	} else {
-    		m[i[0]] = []string{i[1]}
-    	}
-    }
+	for scanner.Scan() {
+		i := strings.Split(scanner.Text(), ")")
+		_, ok := m[i[0]]
+		if ok {
+			m[i[0]] = append(m[i[0]], i[1])
+		} else {
+			m[i[0]] = []string{i[1]}
+		}
+	}
 
 	fmt.Printf("Part 1: %d\n", calculateTotalDepth("COM", m, 0))
 
