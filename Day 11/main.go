@@ -6,7 +6,6 @@ import (
 	"strings"
 	"strconv"
 	"fmt"
-	"time"
 )
 
 type amplifier struct {
@@ -28,17 +27,12 @@ func newAmp(program []int, input chan int, output chan int, done chan int) ampli
 
 func (a *amplifier) run() {
 	for true {
-		
 		x := 100000 + a.program[a.ip]
 		s := strconv.Itoa(x)
 		runes := []rune(s)
 		op := string(runes[4:6])
 
-
-		// fmt.Println(op)
-
 		if op == "99" {
-			fmt.Println("hallo")
 			a.done <- 1
 			close(a.output)
 			close(a.input)
@@ -222,6 +216,57 @@ func (a *amplifier) run() {
 	}
 }
 
+func runRobot(program []int, initialInput int) map[complex128]int {
+	input := make(chan int)
+	output := make(chan int)
+	done := make(chan int)
+	amp1 := newAmp(program, input, output, done)
+
+	go amp1.run()
+
+	input <- initialInput
+
+	pos := complex(0, 0)
+	dir := complex(0, -1)
+	buffer := []int{}
+
+	m := map[complex128]int{}
+	m[pos] = 1
+
+	out:
+	for {
+		currentColor, ok := m[pos]
+		if !ok {
+			currentColor = 0
+		}
+
+		select {
+		case <-done:
+			break out
+		case amp1.input <-currentColor:
+		case o := <- amp1.output:
+			buffer = append(buffer, o)
+			if len(buffer) == 2 {
+				color := buffer[0]
+				turn := buffer[1]
+
+				if turn == 0 {
+				dir = dir * complex(0, -1)
+				} else {
+					dir = dir * complex(0, 1)
+				}
+
+				m[pos] = color
+				pos = pos + dir
+
+				buffer = nil			
+			}
+		}
+	}
+
+	return m
+}
+
 func main() {
 	file, _ := os.Open("input")
 	defer file.Close()
@@ -234,64 +279,19 @@ func main() {
 		ints = append(ints, i)
 	}
 
-	inp := make(chan int)
-	output := make(chan int)
-	done := make(chan int)
-	amp1 := newAmp(ints, inp, output, done)
-
-	go amp1.run()
-
-	// inp <- 1
-
-	pos := complex(0, 0)
-	dir := complex(0, -1)
-
-	m := map[complex128]int{}
-	m[pos] = 1
-
-	for {
-
-		select {
-		case d := <-done:
-			break
-			fmt.Println("done", d)
-			break
-		default:
-			// fmt.Println("run")
-			currentColor, ok := m[pos]
-			if !ok {
-				currentColor = 0
-			}
-			// fmt.Println("inp1")
-			amp1.input <- currentColor
-			// fmt.Println("outp1")
-			color, d := <- amp1.output
-			if !d {
-				break
-			}
-			// fmt.Println("outp2")
-			turn, d := <- amp1.output
-			if !d {
-				break
-			}
-			// fmt.Println(color, turn)
-			if turn == 0 {
-				dir = dir * complex(0, -1)
-			} else {
-				dir = dir * complex(0, 1)
-			}
-			m[pos] = color
-			// fmt.Println(pos, dir)
-			pos = pos + dir
-			// fmt.Println(m)
-
-			// time.Sleep(10 * time.Microsecond)
-		}
-	}
+	m := runRobot(ints, 0)
 
 	count := 0
+	for range m {
+		count++
+	}
+
+	fmt.Printf("Part 1: %d\n", count)
+
+	m = runRobot(ints, 1)
+
 	minX, minY, maxX, maxY := 0, 0, 0, 0
-	for k, _ := range m {
+	for k := range m {
 		x := int(real(k))
 		y := int(imag(k))
 		if x < minX {
@@ -305,12 +305,12 @@ func main() {
 		} else if y > maxY {
 			maxY = y
 		}
-		count += 1
 	}
 
-	plot := [6][43]int{}
-
-	fmt.Println(minX, maxX, minY, maxY, count)
+	plot := make([][]int, maxY-minY+1)
+	for i := 0; i < maxY-minY+1; i++ {
+		plot[i] = make([]int, maxX-minX+1)
+	}
 
 	for k, v := range m {
 		x := int(real(k))
@@ -318,6 +318,8 @@ func main() {
 
 		plot[y-minY][x-minX] = v
 	}
+
+	fmt.Println("Part 2:")
 
 	for y := 0; y < len(plot); y++ {
 		for x := 0; x < len(plot[0]); x++ {
@@ -330,6 +332,4 @@ func main() {
 
 		fmt.Print("\n")
 	}
-
-	time.Sleep(500 * time.Millisecond)
 }
