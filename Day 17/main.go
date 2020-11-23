@@ -96,10 +96,8 @@ func (a *amplifier) run() {
 			if mode1 == "2" {
 				param = param+a.base
 			}
-			// fmt.Print("i")
+
 			rec := <-a.input
-			rec = <-a.input
-			fmt.Println("GET", rec)
 			a.program[param] = rec
 			a.ip += 2
 		} else if op == "04" {
@@ -111,7 +109,6 @@ func (a *amplifier) run() {
 			}
 			send := param
 
-			// fmt.Print("o")
 			a.output <- send
 			a.ip += 2
 		} else if op == "05" {
@@ -284,5 +281,35 @@ func main() {
 		total += pos[0] * pos[1]
 	}
 
+	ints[0] = 2
+	amp = newAmp(ints, make(chan int), make(chan int), make(chan int))
+
+	instructions := []int{65, 44, 65, 44, 66, 44, 67, 44, 67, 44, 65, 44, 66, 44, 67, 44, 65, 44, 66, 10, 
+		int('L'), 44, int('1'), int('2'), 44, int('L'), 44, int('1'), int('2'), 44, int('R'), 44, int('1'), int('2'), 10,
+		int('L'), 44, int('8'), 44, int('L'), 44, int('8'), 44, int('R'), 44, int('1'), int('2'), 44, int('L'), 44, int('8'), 44, int('L'), 44, int('8'), 10,
+		int('L'), 44, int('1'), int('0'), 44, int('R'), 44, int('8'), 44, int('R'), 44, int('1'), int('2'), 10,
+		int('n'), 10, 10}
+
+	index := 0
+	finalScore := 0
+	go amp.run()
+
+	loop2:
+	for {
+		select {
+		case <- amp.done:
+			break loop2
+		case amp.input <- instructions[index]:
+			index++
+		case out := <- amp.output:
+			if out < 200 {
+				fmt.Print(string(out))
+			} else {
+				finalScore = out
+			}
+		}
+	}
+
 	fmt.Printf("Part 1: %d\n", total)
+	fmt.Printf("Part 2: %d\n", finalScore)
 }
